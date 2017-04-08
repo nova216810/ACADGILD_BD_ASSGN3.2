@@ -1,0 +1,54 @@
+/***
+List all files and sub directories of the given directory path whose last modified time is between given start_ts and end_ts
+***/
+
+import java.io.*;
+import java.text.DateFormat;
+import java.util.Date;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileStatus;
+
+public class ListByTS {
+	public static void main(String[] args) {
+		if (args.length != 3) {
+			System.out.println("Pass 1)directory 2) start time 3) end time");
+			System.exit(1);
+		}
+		
+		long start_ts = Long.parseLong(args[1]);
+		
+		long end_ts = Long.parseLong(args[2]);
+		Path path = new Path(args[0]);
+		readFileRecursive(path, start_ts, end_ts);
+	}
+	
+	private static void readFileRecursive(Path path, long start_ts, long end_ts)
+	{
+	
+		Configuration conf = new Configuration();
+		FileSystem fileSystem;
+		try {
+			
+			fileSystem = FileSystem.get(path.toUri(), conf);
+			FileStatus[] fileStatus=fileSystem.listStatus(path);
+			for (FileStatus fStat : fileStatus) 
+			{
+				if (fStat.getModificationTime() > start_ts && fStat.getModificationTime() < end_ts)
+				{
+					if (fStat.isDirectory()) {
+						System.out.println("Directory: " + fStat.getPath());
+						readFileRecursive(fStat.getPath(), start_ts, end_ts);
+					}
+					else if (fStat.isFile()) {
+						System.out.println("File: " + fStat.getPath());
+					}
+				}
+			}
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+	}
+}
